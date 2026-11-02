@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MenuIcon, MoonIcon, SunIcon } from "lucide-react";
+import { ChevronDownIcon, MenuIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,6 +157,10 @@ export function Navbar() {
                 <span className="hidden max-w-[9rem] truncate text-sm font-medium md:inline">
                   {user.name}
                 </span>
+                <ChevronDownIcon
+                  aria-hidden
+                  className="size-3.5 text-muted-foreground"
+                />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60">
                 <DropdownMenuLabel className="truncate text-xs text-muted-foreground">
