@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon, Loader2Icon } from "lucide-react";
@@ -229,9 +230,11 @@ export default function LoginPage() {
               it feels like our own studio now.”
             </p>
             <footer className="mt-4 flex items-center gap-3">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80"
                 alt=""
+                width={40}
+                height={40}
                 className="size-10 rounded-full object-cover ring-2 ring-primary"
               />
               <div>

@@ -10,6 +10,7 @@ import "swiper/css/thumbs";
 import type { Swiper as SwiperType } from "swiper";
 import Image from "next/image";
 import { ChevronLeftIcon, ChevronRightIcon, Maximize2Icon } from "lucide-react";
+import { useMounted } from "@/hooks/use-mounted";
 import { cn } from "cn";
 
 interface GalleryCarouselProps {
@@ -18,13 +19,11 @@ interface GalleryCarouselProps {
 }
 
 export function GalleryCarousel({ images, title }: GalleryCarouselProps) {
-  const [mounted, setMounted] = React.useState(false);
+  const mounted = useMounted();
   const [thumbsSwiper, setThumbsSwiper] = React.useState<SwiperType | null>(
     null,
   );
   const [active, setActive] = React.useState(0);
-
-  React.useEffect(() => setMounted(true), []);
 
   if (!mounted) {
     return (

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRightIcon, RefreshCwIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/shared/section-heading";
 import {
@@ -31,7 +31,9 @@ export function FeaturedStudios() {
   }, []);
 
   React.useEffect(() => {
-    void load();
+    // Defer the async load so state isn't set synchronously in the effect
+    const t = setTimeout(() => void load(), 0);
+    return () => clearTimeout(t);
   }, [load]);
 
   return (

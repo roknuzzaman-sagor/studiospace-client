@@ -27,8 +27,8 @@ export default function NotFound() {
         </h1>
 
         <p className="max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-          The page you're looking for was moved, renamed or never scheduled.
-          Let's get you back to a studio that actually exists.
+          The page you&apos;re looking for was moved, renamed or never scheduled.
+          Let&apos;s get you back to a studio that actually exists.
         </p>
 
         <div className="flex flex-wrap justify-center gap-3">

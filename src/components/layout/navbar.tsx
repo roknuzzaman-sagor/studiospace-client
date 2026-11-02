@@ -24,8 +24,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/shared/logo";
 import { useAuth } from "@/lib/auth";
+import { useMounted } from "@/hooks/use-mounted";
 import { toast } from "sonner";
 import { cn } from "cn";
+
+function subscribeScroll(onChange: () => void) {
+  window.addEventListener("scroll", onChange, { passive: true });
+  return () => window.removeEventListener("scroll", onChange);
+}
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -41,23 +47,24 @@ function isActive(pathname: string, href: string) {
 
 export function Navbar() {
   const pathname = usePathname();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const { user, logout } = useAuth();
-  const [scrolled, setScrolled] = React.useState(false);
+  const mounted = useMounted();
   const [open, setOpen] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
 
-  React.useEffect(() => setMounted(true), []);
+  // Scroll state read through the external store — no setState-in-effect
+  const scrolled = React.useSyncExternalStore(
+    subscribeScroll,
+    () => window.scrollY > 12,
+    () => false,
+  );
 
-  React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Close the mobile sheet on navigation
-  React.useEffect(() => setOpen(false), [pathname]);
+  // Close the mobile sheet when the route changes (adjust-state-during-render)
+  const [prevPathname, setPrevPathname] = React.useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    setOpen(false);
+  }
 
   function initials(name: string) {
     return name

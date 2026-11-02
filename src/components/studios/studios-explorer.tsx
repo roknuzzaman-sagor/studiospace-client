@@ -52,10 +52,13 @@ export function StudiosExplorer() {
   const [loading, setLoading] = React.useState(true);
   const [failed, setFailed] = React.useState(false);
 
-  // Keep local state in sync when the query param changes (e.g. from home)
-  React.useEffect(() => {
+  // Keep local state in sync when the query param changes (e.g. from home) —
+  // adjust-during-render avoids a setState-in-effect
+  const [prevParam, setPrevParam] = React.useState(categoryParam);
+  if (prevParam !== categoryParam) {
+    setPrevParam(categoryParam);
     setCategory(categoryParam);
-  }, [categoryParam]);
+  }
 
   const load = React.useCallback(async () => {
     setLoading(true);

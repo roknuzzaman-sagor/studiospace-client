@@ -15,7 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { SectionHeading } from "@/components/shared/section-heading";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { fetchBookings, fetchStudios } from "@/lib/api";
 import { useAuth } from "@/lib/auth";

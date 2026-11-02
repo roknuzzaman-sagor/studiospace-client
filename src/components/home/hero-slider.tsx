@@ -10,15 +10,14 @@ import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useMounted } from "@/hooks/use-mounted";
 import { HERO_SLIDES } from "@/lib/constants";
 
 export function HeroSlider() {
   const [active, setActive] = React.useState(0);
   // Swiper reads Date() internally — mount it client-side only so the route
   // can be prerendered without an unstable-value error.
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   return (
     <section

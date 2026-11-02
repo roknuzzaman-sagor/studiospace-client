@@ -7,6 +7,7 @@ import { ArrowRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/shared/logo";
+import { useMounted } from "@/hooks/use-mounted";
 import { FOOTER_CATEGORIES } from "@/lib/constants";
 
 const QUICK_LINKS = [
@@ -78,12 +79,10 @@ function SocialIcon({ icon, className }: { icon: string; className?: string }) {
 
 export function Footer() {
   const [email, setEmail] = React.useState("");
-  const [year, setYear] = React.useState<string>("2026");
-
-  // Avoid reading Date() during prerender (unstable value in client components)
-  React.useEffect(() => {
-    setYear(String(new Date().getFullYear()));
-  }, []);
+  // Date() only runs client-side: useMounted is false during prerender, so the
+  // build never sees an unstable value and the year is correct after hydration.
+  const mounted = useMounted();
+  const year = mounted ? String(new Date().getFullYear()) : "2026";
 
   function handleNewsletter(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
