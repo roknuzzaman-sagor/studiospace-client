@@ -21,6 +21,7 @@ export function LinkButton({
 }: ButtonOwnProps & Omit<NextLinkProps, "href"> & { href: NextLinkProps["href"] }) {
   return (
     <Button
+      nativeButton={false}
       render={<Link href={href} />}
       variant={props.variant ?? undefined}
       size={props.size ?? undefined}

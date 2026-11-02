@@ -79,14 +79,14 @@ export function CtaBand() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Button
-              render={<Link href="/studios" />}
+              nativeButton={false} render={<Link href="/studios" />}
               size="lg"
               className="beam h-12 gap-2 rounded-full px-8 text-base font-bold"
             >
               Explore Studios
             </Button>
             <Button
-              render={<Link href="/add-studio" />}
+              nativeButton={false} render={<Link href="/add-studio" />}
               size="lg"
               variant="outline"
               className="h-12 rounded-full border-white/30 bg-white/10 px-8 text-base font-bold text-white hover:bg-white/20 hover:text-white"

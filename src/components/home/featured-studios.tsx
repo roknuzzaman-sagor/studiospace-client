@@ -76,7 +76,7 @@ export function FeaturedStudios() {
 
       <div className="mt-10 flex justify-center">
         <Button
-          render={<Link href="/studios" />}
+          nativeButton={false} render={<Link href="/studios" />}
           variant="outline"
           className="group h-11 gap-2 rounded-full px-7 font-semibold"
         >

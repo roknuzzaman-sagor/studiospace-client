@@ -43,7 +43,7 @@ export function HowItWorks() {
 
       <div className="mt-12 flex justify-center">
         <Button
-          render={<Link href="/studios" />}
+          nativeButton={false} render={<Link href="/studios" />}
           className="beam h-11 gap-2 rounded-full px-8 font-semibold shadow-[0_14px_30px_-16px_oklch(0.76_0.155_62)]"
         >
           Start with step one

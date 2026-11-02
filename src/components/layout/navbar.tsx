@@ -156,16 +156,16 @@ export function Navbar() {
                   {user.email}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem render={<Link href="/dashboard" />}>
+                <DropdownMenuItem nativeButton={false} render={<Link href="/dashboard" />}>
                   Dashboard
                 </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/add-studio" />}>
+                <DropdownMenuItem nativeButton={false} render={<Link href="/add-studio" />}>
                   Add New Studio
                 </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/my-listings" />}>
+                <DropdownMenuItem nativeButton={false} render={<Link href="/my-listings" />}>
                   My Studio Listings
                 </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/my-bookings" />}>
+                <DropdownMenuItem nativeButton={false} render={<Link href="/my-bookings" />}>
                   My Bookings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -180,14 +180,14 @@ export function Navbar() {
           ) : (
             <div className="hidden items-center gap-2 lg:flex">
               <Button
-                render={<Link href="/login" />}
+                nativeButton={false} render={<Link href="/login" />}
                 variant="ghost"
                 className="rounded-full font-semibold"
               >
                 Login
               </Button>
               <Button
-                render={<Link href="/register" />}
+                nativeButton={false} render={<Link href="/register" />}
                 className="beam rounded-full font-semibold shadow-[0_10px_25px_-12px_oklch(0.76_0.155_62)]"
               >
                 Register
@@ -257,28 +257,28 @@ export function Navbar() {
                       </div>
                     </div>
                     <Button
-                      render={<Link href="/dashboard" />}
+                      nativeButton={false} render={<Link href="/dashboard" />}
                       variant="outline"
                       className="rounded-full"
                     >
                       Dashboard
                     </Button>
                     <Button
-                      render={<Link href="/add-studio" />}
+                      nativeButton={false} render={<Link href="/add-studio" />}
                       variant="outline"
                       className="rounded-full"
                     >
                       Add New Studio
                     </Button>
                     <Button
-                      render={<Link href="/my-listings" />}
+                      nativeButton={false} render={<Link href="/my-listings" />}
                       variant="outline"
                       className="rounded-full"
                     >
                       My Studio Listings
                     </Button>
                     <Button
-                      render={<Link href="/my-bookings" />}
+                      nativeButton={false} render={<Link href="/my-bookings" />}
                       variant="outline"
                       className="rounded-full"
                     >
@@ -295,14 +295,14 @@ export function Navbar() {
                 ) : (
                   <>
                     <Button
-                      render={<Link href="/login" />}
+                      nativeButton={false} render={<Link href="/login" />}
                       variant="outline"
                       className="rounded-full"
                     >
                       Login
                     </Button>
                     <Button
-                      render={<Link href="/register" />}
+                      nativeButton={false} render={<Link href="/register" />}
                       className="rounded-full"
                     >
                       Register

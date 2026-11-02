@@ -85,7 +85,7 @@ export function HeroSlider() {
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button
-              render={<Link href="/studios" />}
+              nativeButton={false} render={<Link href="/studios" />}
               size="lg"
               className="beam h-12 gap-2 rounded-full px-8 text-base font-bold shadow-[0_16px_40px_-16px_oklch(0.76_0.155_62)]"
             >
@@ -93,7 +93,7 @@ export function HeroSlider() {
               <ArrowRightIcon className="size-4" />
             </Button>
             <Button
-              render={<Link href="/add-studio" />}
+              nativeButton={false} render={<Link href="/add-studio" />}
               size="lg"
               variant="outline"
               className="h-12 rounded-full border-white/35 bg-white/10 px-8 text-base font-bold text-white backdrop-blur-sm hover:bg-white/20 hover:text-white"

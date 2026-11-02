@@ -114,7 +114,7 @@ export function StudioCard({ studio, className }: StudioCardProps) {
             </span>
           </p>
           <Button
-            render={<Link href={`/studios/${studio._id}`} />}
+            nativeButton={false} render={<Link href={`/studios/${studio._id}`} />}
             size="sm"
             variant="outline"
             className="rounded-full"

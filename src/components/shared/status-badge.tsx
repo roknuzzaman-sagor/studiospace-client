@@ -66,7 +66,7 @@ export function EmptyState({
         </p>
       </div>
       {actionLabel && actionHref ? (
-        <Button render={<Link href={actionHref} />} className="rounded-full">
+        <Button nativeButton={false} render={<Link href={actionHref} />} className="rounded-full">
           {actionLabel}
         </Button>
       ) : null}
