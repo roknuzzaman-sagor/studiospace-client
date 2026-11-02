@@ -132,7 +132,10 @@ export function StudiosExplorer() {
           <div className="flex flex-wrap items-center gap-2.5">
             <SlidersHorizontalIcon className="hidden size-4 text-muted-foreground sm:block" />
 
-            <Select value={category} onValueChange={selectCategory}>
+            <Select
+              value={category}
+              onValueChange={(v) => v && selectCategory(v)}
+            >
               <SelectTrigger className="h-10 w-[165px] rounded-full">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -146,7 +149,7 @@ export function StudiosExplorer() {
               </SelectContent>
             </Select>
 
-            <Select value={price} onValueChange={setPrice}>
+            <Select value={price} onValueChange={(v) => v && setPrice(v)}>
               <SelectTrigger className="h-10 w-[155px] rounded-full">
                 <SelectValue placeholder="Price" />
               </SelectTrigger>
@@ -159,7 +162,10 @@ export function StudiosExplorer() {
               </SelectContent>
             </Select>
 
-            <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+            <Select
+              value={sort}
+              onValueChange={(v) => v && setSort(v as typeof sort)}
+            >
               <SelectTrigger className="h-10 w-[150px] rounded-full">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
