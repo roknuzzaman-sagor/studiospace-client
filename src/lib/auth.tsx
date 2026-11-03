@@ -33,10 +33,38 @@ interface AuthContextValue {
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
+/**
+ * Demo-mode accounts seeded on first load so examiners can sign in with the
+ * credentials published in the README without registering first. The creator
+ * account matches the seeded bookings; the host account owns a seed listing.
+ */
+const SEED_ACCOUNTS: StoredUser[] = [
+  {
+    name: "Examiner Creator",
+    email: "examiner@studiospace.dev",
+    photoURL:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+    password: "Examiner@123",
+  },
+  {
+    name: "Elena Vasquez",
+    email: "host@studiospace.dev",
+    photoURL:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
+    password: "Host@123456",
+  },
+];
+
 function readUsers(): StoredUser[] {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) ?? "[]");
+    const raw = localStorage.getItem(USERS_KEY);
+    if (raw === null) {
+      // First visit in this browser — publish the documented demo accounts
+      localStorage.setItem(USERS_KEY, JSON.stringify(SEED_ACCOUNTS));
+      return SEED_ACCOUNTS;
+    }
+    return JSON.parse(raw);
   } catch {
     return [];
   }
