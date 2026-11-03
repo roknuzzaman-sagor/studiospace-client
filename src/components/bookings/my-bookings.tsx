@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   CalendarIcon,
   ClockIcon,
+  FileTextIcon,
   MapPinIcon,
   XIcon,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import { EmptyState, StatusBadge } from "@/components/shared/status-badge";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { cancelBooking, fetchBookings } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { InvoiceModal } from "./invoice-modal";
 import type { Booking } from "@/lib/types";
 
 export function MyBookings() {
@@ -33,6 +35,9 @@ export function MyBookings() {
   const [bookings, setBookings] = React.useState<Booking[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [pendingCancel, setPendingCancel] = React.useState<Booking | null>(
+    null,
+  );
+  const [invoiceBooking, setInvoiceBooking] = React.useState<Booking | null>(
     null,
   );
   const [cancelling, setCancelling] = React.useState(false);
@@ -174,7 +179,7 @@ export function MyBookings() {
               </div>
 
               {/* Actions */}
-              <div className="flex shrink-0 gap-2 sm:flex-col sm:items-end">
+              <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-end">
                 {booking.status === "Pending" ? (
                   <Button
                     variant="destructive"
@@ -191,6 +196,14 @@ export function MyBookings() {
                       : "Contact the host to modify"}
                   </span>
                 )}
+                <Button
+                  variant="outline"
+                  onClick={() => setInvoiceBooking(booking)}
+                  className="h-9 gap-1.5 rounded-full px-5 text-sm font-semibold"
+                >
+                  <FileTextIcon className="size-3.5" />
+                  Invoice
+                </Button>
                 <Button
                   render={<Link href={`/studios/${booking.studioId}`} />}
                   nativeButton={false}
@@ -236,6 +249,12 @@ export function MyBookings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <InvoiceModal
+        booking={invoiceBooking}
+        open={!!invoiceBooking}
+        onOpenChange={(o) => !o && setInvoiceBooking(null)}
+      />
     </div>
   );
 }

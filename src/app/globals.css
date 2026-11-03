@@ -413,3 +413,25 @@
   border-radius: 999px;
   background: var(--primary) !important;
 }
+
+/* Invoice print — browser "Save as PDF" output shows only the document */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .invoice-print,
+  .invoice-print * {
+    visibility: visible;
+  }
+  .invoice-print {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    box-shadow: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
