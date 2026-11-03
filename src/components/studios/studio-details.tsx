@@ -21,17 +21,19 @@ import { GalleryCarousel } from "./gallery-carousel";
 import { BookingModal } from "./booking-modal";
 import { fetchReviews, fetchStudio } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useWishlist } from "@/hooks/use-wishlist";
 import type { Review, Studio } from "@/lib/types";
 
 const FALLBACK_GALLERY = (url: string) => [url, url, url];
 
 export function StudioDetails({ id }: { id: string }) {
   const { user } = useAuth();
+  const { has: isSaved, toggle: toggleSavedStore } = useWishlist();
   const [studio, setStudio] = React.useState<Studio | null>(null);
   const [reviews, setReviews] = React.useState<Review[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [bookingOpen, setBookingOpen] = React.useState(false);
-  const [saved, setSaved] = React.useState(false);
+  const saved = studio ? isSaved(studio._id) : false;
 
   React.useEffect(() => {
     let cancelled = false;
@@ -58,12 +60,11 @@ export function StudioDetails({ id }: { id: string }) {
       toast.error("Sign in to save studios to your wishlist.");
       return;
     }
-    setSaved((v) => {
-      toast.success(
-        v ? "Removed from your saved studios." : "Saved to your wishlist.",
-      );
-      return !v;
-    });
+    if (!studio) return;
+    toggleSavedStore(studio._id);
+    toast.success(
+      saved ? "Removed from your saved studios." : "Saved to your wishlist.",
+    );
   }
 
   if (loading) {

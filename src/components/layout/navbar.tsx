@@ -179,6 +179,9 @@ export function Navbar() {
                 <DropdownMenuItem nativeButton={false} render={<Link href="/my-bookings" />}>
                   My Bookings
                 </DropdownMenuItem>
+                <DropdownMenuItem nativeButton={false} render={<Link href="/saved-studios" />}>
+                  Saved Studios
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
@@ -294,6 +297,13 @@ export function Navbar() {
                       className="rounded-full"
                     >
                       My Bookings
+                    </Button>
+                    <Button
+                      nativeButton={false} render={<Link href="/saved-studios" />}
+                      variant="outline"
+                      className="rounded-full"
+                    >
+                      Saved Studios
                     </Button>
                     <Button
                       variant="destructive"
