@@ -7,11 +7,11 @@ import {
   Loader2Icon,
   SaveIcon,
   UploadIcon,
-  UserIcon,
+  UserIcon ,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label }from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -120,6 +120,24 @@ export function AddStudioForm() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const res = await fetch('http://localhost:5000/studios', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...form,
+        hourlyRate: Number(form.hourlyRate),
+        securityDeposit: Number(form.securityDeposit),
+        maxCapacity: Number(form.maxCapacity),
+        amenities,
+      }),
+
+    });
+    
+      const data = await res.json();
+      console.log(data);
 
     if (!user) {
       toast.error("Your session expired — please sign in again.");
