@@ -4,9 +4,9 @@ StudioSpace is a peer-to-peer creative workspace and production studio sharing p
 
 ## Live Website
 
-- **Live site:** [Add your deployed client URL]
-- **Client repository:** [Add your client GitHub repository URL]
-- **Server repository:** [Add your server GitHub repository URL]
+- **Live site:** [https://studiospace-client.vercel.app]
+- **Client repository:** [https://github.com/roknuzzaman-sagor/studiospace-client]
+- **Server repository:** [https://github.com/roknuzzaman-sagor/studiospace-server]
 
 ## Features
 
