@@ -1,12 +1,9 @@
 import axios from "axios";
 import { CATEGORIES } from "./constants";
-import { getApiBaseUrl } from "./auth-contract";
 import type { Booking, BookingStatus, Review, Studio, StudioCategory } from "./types";
 
-const apiBaseUrl = getApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
-
 export const api = axios.create({
-  baseURL: apiBaseUrl,
+  baseURL: "/api",
   withCredentials: true,
 });
 

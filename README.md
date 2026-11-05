@@ -64,7 +64,7 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
 NEXT_PUBLIC_IMGBB_API_KEY=YOUR_IMGBB_API_KEY
 ```
 
-- `NEXT_PUBLIC_API_URL` is the Express backend origin without a path; the client adds `/api` to its requests. The local example assumes the backend runs on port `5000`.
+- `NEXT_PUBLIC_API_URL` is the Express backend origin. The browser calls the same-origin `/api` path and Next.js rewrites those requests to this backend, keeping the HTTPOnly session cookie first-party. The local example assumes the backend runs on port `5000`.
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID` enables the Google sign-in and sign-up buttons. **It must match the server's `GOOGLE_CLIENT_ID`.** Add `http://localhost:3000` to the authorized JavaScript origins in Google Cloud Console. Without it, the buttons explain that Google sign-in is not configured.
 - `NEXT_PUBLIC_IMGBB_API_KEY` is used by the client image-upload feature. A `NEXT_PUBLIC_` variable is exposed to the browser, so do not put private or sensitive secrets in it. The uploaded image URL is what gets stored in MongoDB.
 - Keep server-side secrets out of `NEXT_PUBLIC_` variables.
@@ -169,9 +169,9 @@ npm run start
 The client can be deployed to a platform such as Vercel.
 
 1. Import the client GitHub repository into Vercel.
-2. Configure the production environment variables: `NEXT_PUBLIC_API_URL` (backend origin only, without `/api`), `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, and `NEXT_PUBLIC_IMGBB_API_KEY`.
-3. Deploy the Express backend separately and use its deployed HTTPS URL for `NEXT_PUBLIC_API_URL`.
-4. Configure the backend CORS origin to allow the deployed client domain and allow credentials so the JWT cookie is sent.
+2. Configure the production environment variables: `NEXT_PUBLIC_API_URL` (backend origin only), `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, and `NEXT_PUBLIC_IMGBB_API_KEY`.
+3. Deploy the Express backend separately and set `NEXT_PUBLIC_API_URL` to its deployed HTTPS origin. Next.js proxies browser `/api` requests to it.
+4. Configure the backend CORS origin for the deployed client domain and allow credentials for any direct cross-origin integrations. The proxied API requests are same-origin from the browser.
 5. Add the deployed client domain to the Google OAuth authorized origins.
 6. Test direct navigation and page refreshes on routes such as `/studios`, `/studios/[id]`, `/saved-studios`, `/my-listings`, and `/my-bookings`.
 

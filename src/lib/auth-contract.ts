@@ -9,13 +9,21 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-export function getApiBaseUrl(configuredUrl?: string): string {
+export function getApiOrigin(configuredUrl?: string): string {
   const rawUrl = configuredUrl?.trim() || "http://localhost:5000";
-  const normalizedUrl = rawUrl.replace(/\/+$/, "");
+  let url: URL;
 
-  return /\/api$/i.test(normalizedUrl)
-    ? normalizedUrl
-    : `${normalizedUrl}/api`;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new Error("NEXT_PUBLIC_API_URL must be an absolute backend URL.");
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("NEXT_PUBLIC_API_URL must use HTTP or HTTPS.");
+  }
+
+  return url.origin;
 }
 
 export function createRegisterPayload(input: RegisterPayloadInput) {

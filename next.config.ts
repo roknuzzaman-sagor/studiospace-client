@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
+import { getApiOrigin } from "./src/lib/auth-contract";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  async rewrites() {
+    const apiOrigin = getApiOrigin(process.env.NEXT_PUBLIC_API_URL);
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiOrigin}/api/:path*`,
+      },
+    ];
+  },
   experimental: {
     agentFeedback: true,
   },

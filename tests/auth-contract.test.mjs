@@ -24,13 +24,13 @@ const {
   createGooglePayload,
   createLoginPayload,
   createRegisterPayload,
-  getApiBaseUrl,
+  getApiOrigin,
   isUnauthorizedStatus,
 } = authContract;
 
-test("API base URL appends /api to an origin without duplicating an existing suffix", () => {
-  assert.equal(getApiBaseUrl("https://api.example.test"), "https://api.example.test/api");
-  assert.equal(getApiBaseUrl("https://api.example.test/api/"), "https://api.example.test/api");
+test("API proxy accepts an origin with or without a trailing API path", () => {
+  assert.equal(getApiOrigin("https://api.example.test"), "https://api.example.test");
+  assert.equal(getApiOrigin("https://api.example.test/api/"), "https://api.example.test");
 });
 
 test("registration and login normalize email but preserve the exact password", () => {
