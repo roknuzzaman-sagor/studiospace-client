@@ -57,6 +57,7 @@ export interface Booking {
 }
 
 export interface AuthUser {
+  _id?: string;
   name: string;
   email: string;
   photoURL: string;

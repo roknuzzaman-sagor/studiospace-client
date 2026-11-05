@@ -25,8 +25,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, StatusBadge } from "@/components/shared/status-badge";
 import { SectionHeading } from "@/components/shared/section-heading";
-import { cancelBooking, fetchBookings } from "@/lib/api";
+import { cancelBooking, fetchMyBookings } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/errors";
 import { InvoiceModal } from "./invoice-modal";
 import type { Booking } from "@/lib/types";
 
@@ -47,8 +48,12 @@ export function MyBookings() {
     let cancelled = false;
     (async () => {
       try {
-        const list = await fetchBookings(user.email);
+        const list = await fetchMyBookings();
         if (!cancelled) setBookings(list);
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(getErrorMessage(err, "Could not load your bookings"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -64,14 +69,14 @@ export function MyBookings() {
     try {
       const updated = await cancelBooking(pendingCancel._id);
       setBookings((list) =>
-        list.map((b) => (b._id === pendingCancel._id ? updated : b)),
+        list.map((b) =>
+          b._id === pendingCancel._id ? { ...b, status: updated.status } : b,
+        ),
       );
       toast.success("Booking cancelled — any deposit will be refunded.");
       setPendingCancel(null);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not cancel that booking.",
-      );
+      toast.error(getErrorMessage(err, "Could not cancel that booking"));
     } finally {
       setCancelling(false);
     }

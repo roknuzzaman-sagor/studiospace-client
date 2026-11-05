@@ -1,159 +1,295 @@
-import type { Booking, Review, Studio } from "./types";
-import {
-  SEED_BOOKINGS,
-  SEED_STUDIOS,
-  getSeedReviews,
-  getSeedStudio,
-} from "./seed-data";
+import axios from "axios";
+import { CATEGORIES } from "./constants";
+import type { Booking, BookingStatus, Review, Studio, StudioCategory } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+export const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
+  withCredentials: true,
+});
 
-/** True when a real backend is configured via NEXT_PUBLIC_API_URL. */
-export const hasBackend = API_URL.length > 0;
+const FALLBACK_STUDIO_IMAGE =
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-    credentials: "include", // keeps the HTTPOnly JWT cookie attached (Challenge 1)
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? `Request failed (${res.status})`);
-  }
-  return (await res.json()) as T;
+interface ApiStudio {
+  _id: string;
+  title: string;
+  category: string;
+  hourlyRate: number;
+  securityDeposit?: number;
+  maxCapacity?: number;
+  location?: string;
+  imageURL?: string;
+  imageUrl?: string;
+  gallery?: string[];
+  amenities?: string[];
+  overview?: string;
+  ownerEmail?: string;
+  ownerName?: string;
+  rating?: number;
+  reviewCount?: number;
+  createdAt?: string;
 }
 
-/* ------------------------------- Studios ------------------------------- */
+interface ApiBooking {
+  _id: string;
+  studioId: string | { _id: string };
+  studioTitle: string;
+  userEmail: string;
+  userName?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  totalPrice: number;
+  status: BookingStatus;
+  createdAt?: string;
+}
 
-export async function fetchStudios(
-  params: { category?: string; search?: string } = {},
-): Promise<Studio[]> {
-  if (!hasBackend) {
-    let list = SEED_STUDIOS;
-    if (params.category && params.category !== "all") {
-      list = list.filter(
-        (s) => s.category.toLowerCase().replace(/\s+/g, "-") === params.category,
-      );
-    }
-    if (params.search) {
-      const q = params.search.toLowerCase();
-      list = list.filter(
-        (s) =>
-          s.title.toLowerCase().includes(q) ||
-          s.location.toLowerCase().includes(q) ||
-          s.category.toLowerCase().includes(q),
-      );
-    }
-    return list;
+interface ApiReview {
+  _id: string;
+  studioId?: string;
+  authorName?: string;
+  userName?: string;
+  authorAvatar?: string;
+  user?: { name?: string; photoURL?: string };
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface StudioInput {
+  title: string;
+  category: string;
+  hourlyRate: number;
+  securityDeposit: number;
+  maxCapacity: number;
+  location: string;
+  imageUrl: string;
+  amenities: string[];
+  overview: string;
+}
+
+export interface StudioQuery {
+  category?: string;
+  search?: string;
+  sort?: string;
+  limit?: number;
+  minRate?: number;
+  maxRate?: number;
+}
+
+export interface BookingInput {
+  studioId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  userName: string;
+}
+
+function categoryName(value: string): string {
+  const match = CATEGORIES.find((c) => c.slug === value || c.name === value);
+  return match?.name ?? value;
+}
+
+/**
+ * Accepts the documented envelope (`{ [key]: [...] }`) plus a direct array or
+ * a `{ data: ... }` wrapper, so list endpoints stay compatible across server
+ * variants without changing the UI contract.
+ */
+function listFrom<T>(payload: unknown, key: string): T[] {
+  if (Array.isArray(payload)) return payload as T[];
+  if (!payload || typeof payload !== "object") return [];
+
+  const record = payload as Record<string, unknown>;
+  if (Array.isArray(record[key])) return record[key] as T[];
+
+  const nested = record.data;
+  if (Array.isArray(nested)) return nested as T[];
+  if (nested && typeof nested === "object") {
+    const value = (nested as Record<string, unknown>)[key];
+    if (Array.isArray(value)) return value as T[];
   }
-  const query = new URLSearchParams();
-  if (params.category) query.set("category", params.category);
-  if (params.search) query.set("search", params.search);
-  const qs = query.toString();
-  return request<Studio[]>(`/api/studios${qs ? `?${qs}` : ""}`);
+  return [];
+}
+
+export function mapStudio(raw: ApiStudio): Studio {
+  const imageUrl = raw.imageURL || raw.imageUrl || FALLBACK_STUDIO_IMAGE;
+  return {
+    _id: raw._id,
+    title: raw.title,
+    category: raw.category as StudioCategory,
+    hourlyRate: Number(raw.hourlyRate) || 0,
+    securityDeposit: Number(raw.securityDeposit) || 0,
+    maxCapacity: Number(raw.maxCapacity) || 1,
+    location: raw.location ?? "",
+    imageUrl,
+    gallery: raw.gallery?.length ? raw.gallery : [imageUrl],
+    amenities: raw.amenities ?? [],
+    overview: raw.overview ?? "",
+    ownerEmail: raw.ownerEmail ?? "",
+    ownerName: raw.ownerName ?? "StudioSpace Host",
+    rating: Number(raw.rating) || 0,
+    reviewCount: Number(raw.reviewCount) || 0,
+    createdAt: raw.createdAt ?? "",
+  };
+}
+
+function bookingStudioId(raw: ApiBooking): string {
+  return typeof raw.studioId === "string" ? raw.studioId : raw.studioId._id;
+}
+
+function hoursBetween(startTime: string, endTime: string): number {
+  const [startHour, startMinute] = startTime.split(":").map(Number);
+  const [endHour, endMinute] = endTime.split(":").map(Number);
+  const minutes =
+    endHour * 60 + endMinute - (startHour * 60 + startMinute);
+  return minutes > 0 ? minutes / 60 : 0;
+}
+
+export function mapBooking(raw: ApiBooking, studio?: Studio): Booking {
+  return {
+    _id: raw._id,
+    studioId: bookingStudioId(raw),
+    studioTitle: raw.studioTitle,
+    studioImage: studio?.imageUrl ?? FALLBACK_STUDIO_IMAGE,
+    studioLocation: studio?.location ?? "",
+    userEmail: raw.userEmail,
+    date: raw.date,
+    startTime: raw.startTime,
+    endTime: raw.endTime,
+    hours: hoursBetween(raw.startTime, raw.endTime),
+    totalAmount: Number(raw.totalPrice) || 0,
+    status: raw.status,
+    createdAt: raw.createdAt ?? "",
+  };
+}
+
+export async function fetchStudios(params: StudioQuery = {}): Promise<Studio[]> {
+  const query: Record<string, string | number> = {};
+  if (params.category && params.category !== "all") {
+    query.category = categoryName(params.category);
+  }
+  if (params.search) query.search = params.search;
+  if (params.sort && params.sort !== "featured") query.sort = params.sort;
+  if (params.limit) query.limit = params.limit;
+  if (params.minRate !== undefined) query.minRate = params.minRate;
+  if (params.maxRate !== undefined) query.maxRate = params.maxRate;
+
+  const { data } = await api.get<unknown>("/studios", {
+    params: query,
+  });
+  return listFrom<ApiStudio>(data, "studios").map(mapStudio);
 }
 
 export async function fetchFeaturedStudios(): Promise<Studio[]> {
-  const studios = await fetchStudios();
-  return [...studios]
-    .sort((a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount)
-    .slice(0, 6);
+  const { data } = await api.get<unknown>("/studios/featured");
+  return listFrom<ApiStudio>(data, "studios").slice(0, 6).map(mapStudio);
 }
 
 export async function fetchStudio(id: string): Promise<Studio | null> {
-  if (!hasBackend) return getSeedStudio(id) ?? null;
   try {
-    return await request<Studio>(`/api/studios/${id}`);
-  } catch {
-    return null;
+    const { data } = await api.get<{ studio: ApiStudio }>(`/studios/${id}`);
+    return mapStudio(data.studio);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return null;
+    }
+    throw error;
   }
 }
 
 export async function fetchReviews(studioId: string): Promise<Review[]> {
-  if (!hasBackend) return getSeedReviews(studioId);
   try {
-    return await request<Review[]>(`/api/studios/${studioId}/reviews`);
+    const { data } = await api.get<unknown>(`/studios/${studioId}/reviews`);
+    return listFrom<ApiReview>(data, "reviews").map((review) => ({
+      _id: review._id,
+      studioId: review.studioId ?? studioId,
+      authorName:
+        review.authorName ?? review.userName ?? review.user?.name ?? "Creator",
+      authorAvatar: review.authorAvatar ?? review.user?.photoURL,
+      rating: Number(review.rating) || 0,
+      comment: review.comment,
+      createdAt: review.createdAt,
+    }));
   } catch {
     return [];
   }
 }
 
-export async function createStudio(
-  payload: Omit<Studio, "_id" | "rating" | "reviewCount" | "createdAt">,
-): Promise<Studio> {
-  if (!hasBackend) {
-    return {
-      ...payload,
-      _id: `local-${Date.now()}`,
-      rating: 0,
-      reviewCount: 0,
-      createdAt: new Date().toISOString(),
-    };
-  }
-  return request<Studio>("/api/studios", {
-    method: "POST",
-    body: JSON.stringify(payload),
+export async function fetchMyListings(): Promise<Studio[]> {
+  const { data } = await api.get<unknown>("/studios/my-listings");
+  return listFrom<ApiStudio>(data, "studios").map(mapStudio);
+}
+
+export async function createStudio(input: StudioInput): Promise<Studio> {
+  const { imageUrl, ...rest } = input;
+  const { data } = await api.post<{ studio: ApiStudio }>("/studios", {
+    ...rest,
+    imageURL: imageUrl,
   });
+  return mapStudio(data.studio);
 }
 
 export async function updateStudio(
   id: string,
-  payload: Partial<Studio>,
+  input: StudioInput,
 ): Promise<Studio> {
-  if (!hasBackend) {
-    const existing = getSeedStudio(id);
-    if (!existing) throw new Error("Studio not found");
-    return { ...existing, ...payload };
-  }
-  return request<Studio>(`/api/studios/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
+  const { imageUrl, ...rest } = input;
+  const { data } = await api.put<{ studio: ApiStudio }>(`/studios/${id}`, {
+    ...rest,
+    imageURL: imageUrl,
   });
+  return mapStudio(data.studio);
 }
 
 export async function deleteStudio(id: string): Promise<void> {
-  if (!hasBackend) return;
-  await request(`/api/studios/${id}`, { method: "DELETE" });
+  await api.delete(`/studios/${id}`);
 }
 
-/* ------------------------------- Bookings ------------------------------ */
-
-export async function fetchBookings(userEmail: string): Promise<Booking[]> {
-  if (!hasBackend) {
-    return SEED_BOOKINGS.filter((b) => b.userEmail === userEmail);
-  }
-  return request<Booking[]>(
-    `/api/bookings?userEmail=${encodeURIComponent(userEmail)}`,
+export async function fetchMyBookings(): Promise<Booking[]> {
+  const { data } = await api.get<unknown>("/bookings/my-bookings");
+  const bookings = listFrom<ApiBooking>(data, "bookings");
+  const studios = await fetchStudios().catch(() => [] as Studio[]);
+  const byId = new Map(studios.map((studio) => [studio._id, studio]));
+  return bookings.map((booking) =>
+    mapBooking(booking, byId.get(bookingStudioId(booking))),
   );
 }
 
-export async function createBooking(
-  payload: Omit<Booking, "_id" | "status" | "createdAt">,
-): Promise<Booking> {
-  if (!hasBackend) {
-    return {
-      ...payload,
-      _id: `local-${Date.now()}`,
-      status: "Pending",
-      createdAt: new Date().toISOString(),
-    };
-  }
-  return request<Booking>("/api/bookings", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+export async function createBooking(input: BookingInput): Promise<Booking> {
+  const { data } = await api.post<{ booking: ApiBooking }>("/bookings", input);
+  return mapBooking(data.booking);
 }
 
 export async function cancelBooking(id: string): Promise<Booking> {
-  if (!hasBackend) {
-    const booking = SEED_BOOKINGS.find((b) => b._id === id);
-    if (!booking) throw new Error("Booking not found");
-    return { ...booking, status: "Cancelled" };
-  }
-  return request<Booking>(`/api/bookings/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ status: "Cancelled" }),
-  });
+  const { data } = await api.patch<{ booking: ApiBooking }>(
+    `/bookings/${id}/cancel`,
+  );
+  return mapBooking(data.booking);
+}
+
+export async function fetchWishlist(): Promise<Studio[]> {
+  const { data } = await api.get<unknown>("/wishlist");
+  type WishlistEntry = ApiStudio & { studioId?: ApiStudio | string };
+
+  return listFrom<WishlistEntry>(data, "wishlist")
+    .map((entry) => {
+      const value = entry.studioId ?? entry;
+      return typeof value === "string" ? null : mapStudio(value);
+    })
+    .filter((studio): studio is Studio => Boolean(studio?._id));
+}
+
+export async function checkWishlist(studioId: string): Promise<boolean> {
+  const { data } = await api.get<{ inWishlist: boolean }>(
+    `/wishlist/check/${studioId}`,
+  );
+  return Boolean(data.inWishlist);
+}
+
+export async function addToWishlist(studioId: string): Promise<void> {
+  await api.post("/wishlist", { studioId });
+}
+
+export async function removeFromWishlist(studioId: string): Promise<void> {
+  await api.delete(`/wishlist/${studioId}`);
 }

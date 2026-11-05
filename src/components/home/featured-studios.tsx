@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/shared/section-heading";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/components/shared/studio-card";
 import { EmptyState } from "@/components/shared/status-badge";
 import { fetchFeaturedStudios } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errors";
 import type { Studio } from "@/lib/types";
 
 export function FeaturedStudios() {
@@ -23,7 +25,8 @@ export function FeaturedStudios() {
     setFailed(false);
     try {
       setStudios(await fetchFeaturedStudios());
-    } catch {
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Couldn't load featured studios"));
       setFailed(true);
     } finally {
       setLoading(false);
@@ -31,7 +34,6 @@ export function FeaturedStudios() {
   }, []);
 
   React.useEffect(() => {
-    // Defer the async load so state isn't set synchronously in the effect
     const t = setTimeout(() => void load(), 0);
     return () => clearTimeout(t);
   }, [load]);

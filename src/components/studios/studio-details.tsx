@@ -19,21 +19,26 @@ import { CategoryBadge, RatingBadge } from "@/components/shared/studio-card";
 import { EmptyState } from "@/components/shared/status-badge";
 import { GalleryCarousel } from "./gallery-carousel";
 import { BookingModal } from "./booking-modal";
-import { fetchReviews, fetchStudio } from "@/lib/api";
+import {
+  addToWishlist,
+  checkWishlist,
+  fetchReviews,
+  fetchStudio,
+  removeFromWishlist,
+} from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { useWishlist } from "@/hooks/use-wishlist";
+import { getErrorMessage } from "@/lib/errors";
 import type { Review, Studio } from "@/lib/types";
 
 const FALLBACK_GALLERY = (url: string) => [url, url, url];
 
 export function StudioDetails({ id }: { id: string }) {
   const { user } = useAuth();
-  const { has: isSaved, toggle: toggleSavedStore } = useWishlist();
   const [studio, setStudio] = React.useState<Studio | null>(null);
   const [reviews, setReviews] = React.useState<Review[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [bookingOpen, setBookingOpen] = React.useState(false);
-  const saved = studio ? isSaved(studio._id) : false;
+  const [saved, setSaved] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -46,6 +51,10 @@ export function StudioDetails({ id }: { id: string }) {
         if (cancelled) return;
         setStudio(s);
         setReviews(r);
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(getErrorMessage(err, "Could not load this studio"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -55,16 +64,49 @@ export function StudioDetails({ id }: { id: string }) {
     };
   }, [id]);
 
-  function toggleSaved() {
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) {
+        if (!cancelled) setSaved(false);
+        return;
+      }
+      try {
+        const inWishlist = await checkWishlist(id);
+        if (!cancelled) setSaved(inWishlist);
+      } catch {
+        if (!cancelled) setSaved(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, user]);
+
+  async function toggleSaved() {
     if (!user) {
       toast.error("Sign in to save studios to your wishlist.");
       return;
     }
     if (!studio) return;
-    toggleSavedStore(studio._id);
-    toast.success(
-      saved ? "Removed from your saved studios." : "Saved to your wishlist.",
-    );
+
+    const next = !saved;
+    setSaved(next);
+    try {
+      if (next) await addToWishlist(studio._id);
+      else await removeFromWishlist(studio._id);
+      toast.success(
+        next ? "Saved to your wishlist." : "Removed from your saved studios.",
+      );
+    } catch (err) {
+      setSaved(!next);
+      toast.error(
+        getErrorMessage(
+          err,
+          next ? "Could not save this studio." : "Could not remove this studio.",
+        ),
+      );
+    }
   }
 
   if (loading) {

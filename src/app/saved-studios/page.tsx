@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { SavedStudios } from "@/components/studios/saved-studios";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function SavedStudiosPage() {
-  return <SavedStudios />;
+  return (
+    <ProtectedRoute>
+      <SavedStudios />
+    </ProtectedRoute>
+  );
 }

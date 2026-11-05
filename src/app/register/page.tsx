@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApertureMark } from "@/components/shared/logo";
 import { useAuth, validatePassword } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/errors";
 
 const RULES = [
   { test: (v: string) => /[A-Z]/.test(v), label: "One uppercase letter" },
@@ -64,9 +65,7 @@ export default function RegisterPage() {
       toast.success("Account created — sign in to start booking.");
       router.push("/login");
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Registration failed.",
-      );
+      toast.error(getErrorMessage(err, "Registration failed"));
     } finally {
       setSubmitting(false);
     }

@@ -1,25 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { createAuthClient } from "better-auth/react";
+import { api } from "./api";
 import type { AuthUser } from "./types";
-import { hasBackend } from "./api";
 
-const authClient = hasBackend
-  ? createAuthClient({ baseURL: process.env.NEXT_PUBLIC_API_URL })
-  : null;
-
-const STORAGE_KEY = "studiospace.session";
-const USERS_KEY = "studiospace.users";
-
-interface StoredUser extends AuthUser {
-  password: string;
+interface ApiUser {
+  _id?: string;
+  name?: string;
+  email: string;
+  photoURL?: string;
+  image?: string;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  mode: "demo" | "live";
   login: (email: string, password: string) => Promise<void>;
   register: (input: {
     name: string;
@@ -27,66 +22,20 @@ interface AuthContextValue {
     photoURL: string;
     password: string;
   }) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<AuthUser | null>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
-/**
- * Demo-mode accounts seeded on first load so examiners can sign in with the
- * credentials published in the README without registering first. The creator
- * account matches the seeded bookings; the host account owns a seed listing.
- */
-const SEED_ACCOUNTS: StoredUser[] = [
-  {
-    name: "Examiner Creator",
-    email: "examiner@studiospace.dev",
-    photoURL:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
-    password: "Examiner@123",
-  },
-  {
-    name: "Elena Vasquez",
-    email: "host@studiospace.dev",
-    photoURL:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
-    password: "Host@123456",
-  },
-];
-
-function readUsers(): StoredUser[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    if (raw === null) {
-      // First visit in this browser — publish the documented demo accounts
-      localStorage.setItem(USERS_KEY, JSON.stringify(SEED_ACCOUNTS));
-      return SEED_ACCOUNTS;
-    }
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
-
-function writeUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-function readSession(): AuthUser | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AuthUser) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeSession(user: AuthUser | null) {
-  if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  else localStorage.removeItem(STORAGE_KEY);
+function mapUser(raw: ApiUser): AuthUser {
+  return {
+    _id: raw._id,
+    name: raw.name ?? "StudioSpace member",
+    email: raw.email,
+    photoURL: raw.photoURL ?? raw.image ?? "",
+  };
 }
 
 export function validatePassword(password: string): string | null {
@@ -109,121 +58,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     let cancelled = false;
 
-    async function restore() {
-      if (authClient) {
-        try {
-          const { data } = await authClient.getSession();
-          if (!cancelled) setUser((data?.user as AuthUser | undefined) ?? null);
-        } catch {
-          if (!cancelled) setUser(null);
-        }
-      } else {
-        if (!cancelled) setUser(readSession());
+    (async () => {
+      try {
+        const { data } = await api.get<{ user: ApiUser }>("/auth/me");
+        if (!cancelled) setUser(mapUser(data.user));
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      if (!cancelled) setLoading(false);
-    }
+    })();
 
-    void restore();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const value = React.useMemo<AuthContextValue>(() => {
-    async function login(email: string, password: string) {
-      if (authClient) {
-        const { error } = await authClient.signIn.email({ email, password });
-        if (error) throw new Error(error.message ?? "Unable to sign in.");
-        const { data } = await authClient.getSession();
-        setUser((data?.user as AuthUser | undefined) ?? null);
-        return;
-      }
-
-      // Demo mode — validates against locally registered accounts
-      const stored = readUsers().find(
-        (u) => u.email.toLowerCase() === email.toLowerCase(),
-      );
-      if (!stored || stored.password !== password) {
-        throw new Error("Incorrect email or password. Please try again.");
-      }
-      const session: AuthUser = {
-        name: stored.name,
-        email: stored.email,
-        photoURL: stored.photoURL,
-      };
-      writeSession(session);
-      setUser(session);
+  const refreshUser = React.useCallback(async () => {
+    try {
+      const { data } = await api.get<{ user: ApiUser }>("/auth/me");
+      const next = mapUser(data.user);
+      setUser(next);
+      return next;
+    } catch {
+      setUser(null);
+      return null;
     }
+  }, []);
 
-    async function register(input: {
+  const login = React.useCallback(async (email: string, password: string) => {
+    const { data } = await api.post<{ user: ApiUser }>("/auth/login", {
+      email,
+      password,
+    });
+    setUser(mapUser(data.user));
+  }, []);
+
+  const register = React.useCallback(
+    async (input: {
       name: string;
       email: string;
       photoURL: string;
       password: string;
-    }) {
+    }) => {
       const invalid = validatePassword(input.password);
       if (invalid) throw new Error(invalid);
 
-      if (authClient) {
-        const { error } = await authClient.signUp.email({
-          name: input.name,
-          email: input.email,
-          password: input.password,
-          image: input.photoURL,
-        });
-        if (error) throw new Error(error.message ?? "Unable to register.");
-        return;
-      }
+      await api.post("/auth/register", {
+        name: input.name,
+        email: input.email,
+        password: input.password,
+        photoURL: input.photoURL,
+      });
+    },
+    [],
+  );
 
-      const users = readUsers();
-      if (
-        users.some((u) => u.email.toLowerCase() === input.email.toLowerCase())
-      ) {
-        throw new Error("An account with this email already exists.");
-      }
-      users.push({ ...input, password: input.password });
-      writeUsers(users);
-    }
+  const googleLogin = React.useCallback(async (credential: string) => {
+    const { data } = await api.post<{ user: ApiUser }>("/auth/google", {
+      credential,
+    });
+    setUser(mapUser(data.user));
+  }, []);
 
-    async function loginWithGoogle() {
-      if (authClient) {
-        await authClient.signIn.social({
-          provider: "google",
-          callbackURL: "/",
-        });
-        return;
-      }
-      // Demo mode — simulated Google session
-      const session: AuthUser = {
-        name: "Examiner Google",
-        email: "examiner@studiospace.dev",
-        photoURL:
-          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
-      };
-      writeSession(session);
-      setUser(session);
-    }
-
-    async function logout() {
-      if (authClient) {
-        await authClient.signOut();
-        setUser(null);
-        return;
-      }
-      writeSession(null);
+  const logout = React.useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } finally {
       setUser(null);
     }
+  }, []);
 
-    return {
+  const value = React.useMemo<AuthContextValue>(
+    () => ({
       user,
       loading,
-      mode: authClient ? "live" : "demo",
       login,
       register,
-      loginWithGoogle,
+      googleLogin,
       logout,
-    };
-  }, [user, loading]);
+      refreshUser,
+    }),
+    [user, loading, login, register, googleLogin, logout, refreshUser],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

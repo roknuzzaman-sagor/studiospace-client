@@ -28,8 +28,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CategoryBadge } from "@/components/shared/studio-card";
 import { EmptyState } from "@/components/shared/status-badge";
 import { SectionHeading } from "@/components/shared/section-heading";
-import { deleteStudio, fetchStudios } from "@/lib/api";
+import { deleteStudio, fetchMyListings } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/errors";
 import type { Studio } from "@/lib/types";
 
 export function MyListings() {
@@ -46,9 +47,11 @@ export function MyListings() {
     let cancelled = false;
     (async () => {
       try {
-        const all = await fetchStudios();
+        const list = await fetchMyListings();
+        if (!cancelled) setStudios(list);
+      } catch (err) {
         if (!cancelled) {
-          setStudios(all.filter((s) => s.ownerEmail === user.email));
+          toast.error(getErrorMessage(err, "Could not load your listings"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -68,9 +71,7 @@ export function MyListings() {
       toast.success(`“${pendingDelete.title}” was deleted.`);
       setPendingDelete(null);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not delete that listing.",
-      );
+      toast.error(getErrorMessage(err, "Could not delete that listing"));
     } finally {
       setDeleting(false);
     }

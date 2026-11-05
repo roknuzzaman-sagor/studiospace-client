@@ -7,11 +7,11 @@ import {
   Loader2Icon,
   SaveIcon,
   UploadIcon,
-  UserIcon ,
+  UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label }from "@/components/ui/label";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -24,6 +24,7 @@ import {
 import { SectionHeading } from "@/components/shared/section-heading";
 import { createStudio } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/errors";
 import { AMENITIES, CATEGORIES } from "@/lib/constants";
 
 const IMGBB_KEY = process.env.NEXT_PUBLIC_IMGBB_API_KEY ?? "";
@@ -121,24 +122,6 @@ export function AddStudioForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const res = await fetch('http://localhost:5000/studios', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...form,
-        hourlyRate: Number(form.hourlyRate),
-        securityDeposit: Number(form.securityDeposit),
-        maxCapacity: Number(form.maxCapacity),
-        amenities,
-      }),
-
-    });
-    
-      const data = await res.json();
-      console.log(data);
-
     if (!user) {
       toast.error("Your session expired — please sign in again.");
       return;
@@ -170,15 +153,11 @@ export function AddStudioForm() {
         imageUrl: form.imageUrl.trim(),
         amenities,
         overview: form.overview.trim(),
-        ownerEmail: user.email,
-        ownerName: user.name,
       });
       toast.success("Studio published to your listings.");
       router.push("/my-listings");
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not publish the studio.",
-      );
+      toast.error(getErrorMessage(err, "Could not publish the studio"));
     } finally {
       setSubmitting(false);
     }

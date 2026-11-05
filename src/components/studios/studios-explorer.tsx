@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { SearchIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +21,7 @@ import {
 import { EmptyState } from "@/components/shared/status-badge";
 import { fetchStudios } from "@/lib/api";
 import { CATEGORIES } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
 import type { Studio } from "@/lib/types";
 
 const SORT_OPTIONS = [
@@ -67,17 +69,21 @@ export function StudiosExplorer() {
       const list = await fetchStudios({
         category: category !== "all" ? category : undefined,
         search: search.trim() || undefined,
+        sort: sort === "featured" ? undefined : sort,
+        minRate: price === "over-100" ? 100 : price === "50-100" ? 50 : undefined,
+        maxRate: price === "under-50" ? 50 : price === "50-100" ? 100 : undefined,
       });
       setStudios(list);
-    } catch {
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Couldn't load studios"));
       setFailed(true);
     } finally {
       setLoading(false);
     }
-  }, [category, search]);
+  }, [category, search, price, sort]);
 
   React.useEffect(() => {
-    const t = setTimeout(() => void load(), 250);
+    const t = setTimeout(() => void load(), 300);
     return () => clearTimeout(t);
   }, [load]);
 
@@ -226,7 +232,7 @@ export function StudiosExplorer() {
 
       {/* Result count */}
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground" aria-live="polite">
+        <div className="text-sm text-muted-foreground" aria-live="polite">
           {loading ? (
             <Skeleton className="h-4 w-40" />
           ) : (
@@ -237,7 +243,7 @@ export function StudiosExplorer() {
               {visible.length === 1 ? "studio" : "studios"} available
             </>
           )}
-        </p>
+        </div>
       </div>
 
       {/* Grid */}

@@ -4,36 +4,52 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { HeartIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CategoryBadge, RatingBadge } from "@/components/shared/studio-card";
 import { EmptyState } from "@/components/shared/status-badge";
 import { SectionHeading } from "@/components/shared/section-heading";
-import { fetchStudios } from "@/lib/api";
-import { useWishlist } from "@/hooks/use-wishlist";
+import { fetchWishlist, removeFromWishlist } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errors";
 import type { Studio } from "@/lib/types";
 
 export function SavedStudios() {
-  const { ids, remove, hydrated } = useWishlist();
   const [studios, setStudios] = React.useState<Studio[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [failed, setFailed] = React.useState(false);
+  const [removingId, setRemovingId] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const all = await fetchStudios();
-        if (!cancelled) setStudios(all);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setFailed(false);
+    try {
+      setStudios(await fetchWishlist());
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Could not load your saved studios"));
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const saved = studios.filter((s) => ids.includes(s._id));
+  React.useEffect(() => {
+    const t = setTimeout(() => void load(), 0);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  async function handleRemove(studio: Studio) {
+    setRemovingId(studio._id);
+    try {
+      await removeFromWishlist(studio._id);
+      setStudios((list) => list.filter((s) => s._id !== studio._id));
+      toast.success("Removed from your saved studios.");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Could not remove this studio"));
+    } finally {
+      setRemovingId(null);
+    }
+  }
 
   return (
     <div className="section-pad py-10 sm:py-14">
@@ -42,16 +58,23 @@ export function SavedStudios() {
         className="mb-8"
         eyebrow="Wishlist"
         title="Saved Studios"
-        description="Spaces you tapped the heart on — kept on this device so you can compare before booking."
+        description="Spaces you tapped the heart on — synced to your account so you can compare before booking."
       />
 
-      {!hydrated || loading ? (
+      {loading ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="aspect-[4/3] w-full rounded-xl" />
           ))}
         </div>
-      ) : saved.length === 0 ? (
+      ) : failed ? (
+        <EmptyState
+          title="Couldn't load your saved studios"
+          description="Something went wrong while fetching your wishlist. Check your connection and try again."
+          actionLabel="Try again"
+          onAction={() => void load()}
+        />
+      ) : studios.length === 0 ? (
         <EmptyState
           title="No saved studios yet"
           description="Tap the heart on any studio card or listing page and it will wait for you right here."
@@ -60,7 +83,7 @@ export function SavedStudios() {
         />
       ) : (
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {saved.map((studio) => (
+          {studios.map((studio) => (
             <li
               key={studio._id}
               className="card-hover group flex flex-col overflow-hidden rounded-xl border border-border bg-card"
@@ -117,7 +140,8 @@ export function SavedStudios() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => remove(studio._id)}
+                    onClick={() => void handleRemove(studio)}
+                    disabled={removingId === studio._id}
                     aria-label={`Remove ${studio.title} from saved studios`}
                     className="h-9 gap-1.5 rounded-full px-4 text-sm"
                   >

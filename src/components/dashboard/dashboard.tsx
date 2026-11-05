@@ -16,8 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { fetchBookings, fetchStudios } from "@/lib/api";
+import { fetchMyBookings, fetchMyListings } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/errors";
 import type { Booking, Studio } from "@/lib/types";
 
 export function Dashboard() {
@@ -31,13 +32,17 @@ export function Dashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const [allStudios, myBookings] = await Promise.all([
-          fetchStudios(),
-          fetchBookings(user.email),
+        const [myStudios, myBookings] = await Promise.all([
+          fetchMyListings(),
+          fetchMyBookings(),
         ]);
         if (cancelled) return;
-        setStudios(allStudios.filter((s) => s.ownerEmail === user.email));
+        setStudios(myStudios);
         setBookings(myBookings);
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(getErrorMessage(err, "Could not load your dashboard"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

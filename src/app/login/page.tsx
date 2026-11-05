@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApertureMark } from "@/components/shared/logo";
 import { useAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/errors";
 
 function GoogleIcon() {
   return (
@@ -35,16 +37,21 @@ function GoogleIcon() {
   );
 }
 
+const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, loginWithGoogle } = useAuth();
+  const { login, googleLogin } = useAuth();
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
+
+  const next = searchParams.get("next");
+  const redirectTo = next && next.startsWith("/") ? next : "/";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,27 +65,27 @@ export default function LoginPage() {
     try {
       await login(email.trim(), password);
       toast.success("Welcome back — you're signed in.");
-      const next = searchParams.get("next");
-      router.push(next && next.startsWith("/") ? next : "/");
+      router.push(redirectTo);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Unable to sign in right now.",
-      );
+      toast.error(getErrorMessage(err, "Login failed"));
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleGoogle() {
+  async function handleGoogleSuccess(response: CredentialResponse) {
+    if (!response.credential) {
+      toast.error("Google did not return a sign-in credential.");
+      return;
+    }
+
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
+      await googleLogin(response.credential);
       toast.success("Signed in with Google.");
-      router.push("/");
+      router.push(redirectTo);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Google sign-in failed.",
-      );
+      toast.error(getErrorMessage(err, "Google sign-in failed"));
     } finally {
       setGoogleLoading(false);
     }
@@ -183,20 +190,40 @@ export default function LoginPage() {
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGoogle}
-            disabled={googleLoading}
-            className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold"
-          >
-            {googleLoading ? (
-              <Loader2Icon className="size-4 animate-spin" />
-            ) : (
-              <GoogleIcon />
-            )}
-            Continue with Google
-          </Button>
+          <div className="relative">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={googleLoading}
+              onClick={
+                googleClientId
+                  ? undefined
+                  : () =>
+                      toast.error(
+                        "Google sign-in isn't configured for this build.",
+                      )
+              }
+              className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold"
+            >
+              {googleLoading ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : (
+                <GoogleIcon />
+              )}
+              Continue with Google
+            </Button>
+            {googleClientId ? (
+              <div className="absolute inset-0 z-10 overflow-hidden rounded-full opacity-0 [&>div]:!w-full [&_iframe]:!w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => toast.error("Google sign-in failed")}
+                  width="400"
+                  text="continue_with"
+                  shape="pill"
+                />
+              </div>
+            ) : null}
+          </div>
 
           <p className="mt-7 text-center text-sm text-muted-foreground">
             Don&apos;t have an account yet?{" "}

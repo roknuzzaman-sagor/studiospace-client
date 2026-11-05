@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/shared/status-badge";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { fetchStudio, updateStudio } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/errors";
 import { AMENITIES, CATEGORIES } from "@/lib/constants";
 import type { Studio } from "@/lib/types";
 
@@ -79,6 +80,11 @@ export function EditStudioForm({ id }: { id: string }) {
         setImageUrl(s.imageUrl);
         setOverview(s.overview);
         setAmenities(s.amenities);
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(getErrorMessage(err, "Could not load this listing"));
+          setNotFound(true);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -153,9 +159,7 @@ export function EditStudioForm({ id }: { id: string }) {
       toast.success("Listing updated successfully.");
       router.push("/my-listings");
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not save your changes.",
-      );
+      toast.error(getErrorMessage(err, "Could not save your changes"));
     } finally {
       setSubmitting(false);
     }

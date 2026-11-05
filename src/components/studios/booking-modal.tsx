@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { createBooking } from "@/lib/api";
+import { getErrorMessage } from "@/lib/errors";
 import type { Studio } from "@/lib/types";
 
 const TIMES = Array.from({ length: 17 }, (_, i) => {
@@ -72,15 +73,10 @@ export function BookingModal({ studio, open, onOpenChange }: BookingModalProps) 
     try {
       await createBooking({
         studioId: studio._id,
-        studioTitle: studio.title,
-        studioImage: studio.imageUrl,
-        studioLocation: studio.location,
-        userEmail: user.email,
         date,
         startTime,
         endTime,
-        hours,
-        totalAmount: total,
+        userName: user.name,
       });
       toast.success(
         `Booking requested for ${date} — we'll confirm it shortly.`,
@@ -88,11 +84,8 @@ export function BookingModal({ studio, open, onOpenChange }: BookingModalProps) 
       onOpenChange(false);
       router.push("/my-bookings");
     } catch (err) {
-      // Challenge 2: server rejects overlapping confirmed bookings with a clear message
       toast.error(
-        err instanceof Error
-          ? err.message
-          : "That slot was just taken — pick another time.",
+        getErrorMessage(err, "That slot was just taken — pick another time."),
       );
     } finally {
       setSubmitting(false);
@@ -160,9 +153,9 @@ export function BookingModal({ studio, open, onOpenChange }: BookingModalProps) 
             <div className="flex flex-col gap-2">
               <Label htmlFor="start-time">Start time</Label>
               <Select
-              value={startTime}
-              onValueChange={(v) => v && setStartTime(v)}
-            >
+                value={startTime}
+                onValueChange={(v) => v && setStartTime(v)}
+              >
                 <SelectTrigger id="start-time" className="h-10 w-full rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
