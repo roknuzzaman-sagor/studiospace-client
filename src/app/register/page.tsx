@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { toast } from "sonner";
 import {
   CheckIcon,
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApertureMark } from "@/components/shared/logo";
+import { GoogleIcon } from "@/components/shared/google-icon";
 import { useAuth, validatePassword } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -24,9 +26,11 @@ const RULES = [
   { test: (v: string) => v.length >= 6, label: "At least 6 characters" },
 ];
 
+const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
 
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -34,6 +38,7 @@ export default function RegisterPage() {
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [googleLoading, setGoogleLoading] = React.useState(false);
 
   const passwordError = password ? validatePassword(password) : null;
 
@@ -68,6 +73,24 @@ export default function RegisterPage() {
       toast.error(getErrorMessage(err, "Registration failed"));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleGoogleSuccess(response: CredentialResponse) {
+    if (!response.credential) {
+      toast.error("Google did not return a sign-in credential.");
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      await googleLogin(response.credential);
+      toast.success("Account ready — you're signed in with Google.");
+      router.push("/");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Google sign-up failed"));
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -255,6 +278,49 @@ export default function RegisterPage() {
               )}
             </Button>
           </form>
+
+          <div className="mt-5 flex items-center gap-3" aria-hidden>
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              or
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <div className="relative mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={googleLoading}
+              onClick={
+                googleClientId
+                  ? undefined
+                  : () =>
+                      toast.error(
+                        "Google sign-in isn't configured for this build.",
+                      )
+              }
+              className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold"
+            >
+              {googleLoading ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : (
+                <GoogleIcon />
+              )}
+              Sign up with Google
+            </Button>
+            {googleClientId ? (
+              <div className="absolute inset-0 z-10 overflow-hidden rounded-full opacity-0 [&>div]:!w-full [&_iframe]:!w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => toast.error("Google sign-up failed")}
+                  width="400"
+                  text="continue_with"
+                  shape="pill"
+                />
+              </div>
+            ) : null}
+          </div>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}

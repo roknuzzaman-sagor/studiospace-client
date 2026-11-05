@@ -6,6 +6,7 @@ import type { AuthUser } from "./types";
 
 interface ApiUser {
   _id?: string;
+  id?: string;
   name?: string;
   email: string;
   photoURL?: string;
@@ -31,7 +32,7 @@ const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 function mapUser(raw: ApiUser): AuthUser {
   return {
-    _id: raw._id,
+    _id: raw._id ?? raw.id,
     name: raw.name ?? "StudioSpace member",
     email: raw.email,
     photoURL: raw.photoURL ?? raw.image ?? "",
