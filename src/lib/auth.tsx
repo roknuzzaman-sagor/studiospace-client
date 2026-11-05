@@ -1,16 +1,23 @@
 "use client";
 
 import * as React from "react";
+import axios from "axios";
+import { toast } from "sonner";
 import { api } from "./api";
+import {
+  createGooglePayload,
+  createLoginPayload,
+  createRegisterPayload,
+  isUnauthorizedStatus,
+} from "./auth-contract";
+import { getErrorMessage } from "./errors";
 import type { AuthUser } from "./types";
 
 interface ApiUser {
-  _id?: string;
-  id?: string;
-  name?: string;
+  id: string;
+  name: string;
   email: string;
-  photoURL?: string;
-  image?: string;
+  photoURL: string;
 }
 
 interface AuthContextValue {
@@ -32,10 +39,10 @@ const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 function mapUser(raw: ApiUser): AuthUser {
   return {
-    _id: raw._id ?? raw.id,
-    name: raw.name ?? "StudioSpace member",
+    _id: raw.id,
+    name: raw.name,
     email: raw.email,
-    photoURL: raw.photoURL ?? raw.image ?? "",
+    photoURL: raw.photoURL,
   };
 }
 
@@ -55,16 +62,29 @@ export function validatePassword(password: string): string | null {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const sessionRequestRef = React.useRef<Promise<ApiUser> | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        const { data } = await api.get<{ user: ApiUser }>("/auth/me");
-        if (!cancelled) setUser(mapUser(data.user));
-      } catch {
-        if (!cancelled) setUser(null);
+        sessionRequestRef.current ??= api
+          .get<{ user: ApiUser }>("/auth/me")
+          .then(({ data }) => data.user);
+        const sessionUser = await sessionRequestRef.current;
+        if (!cancelled) setUser(mapUser(sessionUser));
+      } catch (error) {
+        if (!cancelled) {
+          setUser(null);
+          if (
+            !isUnauthorizedStatus(
+              axios.isAxiosError(error) ? error.response?.status : undefined,
+            )
+          ) {
+            toast.error(getErrorMessage(error, "Unable to restore your session."));
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -81,16 +101,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const next = mapUser(data.user);
       setUser(next);
       return next;
-    } catch {
-      setUser(null);
-      return null;
+    } catch (error) {
+      if (
+        isUnauthorizedStatus(
+          axios.isAxiosError(error) ? error.response?.status : undefined,
+        )
+      ) {
+        setUser(null);
+        return null;
+      }
+      throw error;
     }
   }, []);
 
   const login = React.useCallback(async (email: string, password: string) => {
     const { data } = await api.post<{ user: ApiUser }>("/auth/login", {
-      email,
-      password,
+      ...createLoginPayload(email, password),
     });
     setUser(mapUser(data.user));
   }, []);
@@ -105,19 +131,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const invalid = validatePassword(input.password);
       if (invalid) throw new Error(invalid);
 
-      await api.post("/auth/register", {
-        name: input.name,
-        email: input.email,
-        password: input.password,
-        photoURL: input.photoURL,
-      });
+      await api.post("/auth/register", createRegisterPayload(input));
     },
     [],
   );
 
   const googleLogin = React.useCallback(async (credential: string) => {
     const { data } = await api.post<{ user: ApiUser }>("/auth/google", {
-      credential,
+      ...createGooglePayload(credential),
     });
     setUser(mapUser(data.user));
   }, []);

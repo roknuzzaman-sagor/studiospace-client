@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.ibb.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
-      { protocol: "https", hostname: "www.industrialempathy.com" },
+      { protocol: "https", hostname: "plus.unsplash.com" },
     ],
   },
   turbopack: {

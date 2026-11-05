@@ -165,39 +165,42 @@ export default function LoginPage() {
           <span className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="relative">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={googleLoading}
-            onClick={
-              googleClientId
-                ? undefined
-                : () =>
-                    toast.error(
-                      "Google sign-in isn't configured for this build.",
-                    )
-            }
-            className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold"
-          >
-            {googleLoading ? (
-              <Loader2Icon className="size-4 animate-spin" />
-            ) : (
-              <GoogleIcon />
-            )}
-            Continue with Google
-          </Button>
+        <div className="mt-1 flex w-full justify-center">
           {googleClientId ? (
-            <div className="absolute inset-0 z-10 overflow-hidden rounded-full opacity-0 [&>div]:!w-full [&_iframe]:!w-full">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => toast.error("Google sign-in failed")}
-                width="400"
-                text="continue_with"
-                shape="pill"
-              />
-            </div>
-          ) : null}
+            googleLoading ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled
+                className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold"
+              >
+                <Loader2Icon className="size-4 animate-spin" />
+                Connecting to Google…
+              </Button>
+            ) : (
+              <div className="flex h-11 w-full items-center justify-center overflow-hidden rounded-full [&>div]:!w-full [&_iframe]:!w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => toast.error("Google sign-in failed")}
+                  width="400"
+                  text="continue_with"
+                  shape="pill"
+                />
+              </div>
+            )
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                toast.error("Google sign-in isn't configured for this build.")
+              }
+              className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold"
+            >
+              <GoogleIcon />
+              Continue with Google
+            </Button>
+          )}
         </div>
 
         <p className="mt-7 text-center text-sm text-muted-foreground">
