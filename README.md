@@ -100,6 +100,15 @@ GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
 - `GOOGLE_CLIENT_ID` must be identical to the client's `NEXT_PUBLIC_GOOGLE_CLIENT_ID`.
 - `JWT_SECRET` signs the HTTPOnly `token` cookie. Use a long random value and keep it server-side only.
 - In production set `NODE_ENV=production` so cookies are issued with `Secure` + `SameSite=None` for cross-site use, and set `CLIENT_URL` to the deployed client origin.
+- **Database name:** `MONGO_URI` must include the database path (for example `.../studiospace?retryWrites=true&w=majority`). If it is omitted, Mongoose writes to the default `test` database. The reference server's `MONGODB_DB` value is currently unused; to honour it, update `src/config/db.js`:
+
+  ```js
+  await mongoose.connect(process.env.MONGO_URI, {
+    dbName: process.env.MONGODB_DB || "studiospace",
+  });
+  ```
+
+  Existing documents in `test` are not moved automatically when you switch database names.
 
 ### 5. Start the development server
 
