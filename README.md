@@ -100,15 +100,18 @@ GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
 - `GOOGLE_CLIENT_ID` must be identical to the client's `NEXT_PUBLIC_GOOGLE_CLIENT_ID`.
 - `JWT_SECRET` signs the HTTPOnly `token` cookie. Use a long random value and keep it server-side only.
 - In production set `NODE_ENV=production` so cookies are issued with `Secure` + `SameSite=None` for cross-site use, and set `CLIENT_URL` to the deployed client origin.
-- **Database name:** `MONGO_URI` must include the database path (for example `.../studiospace?retryWrites=true&w=majority`). If it is omitted, Mongoose writes to the default `test` database. The reference server's `MONGODB_DB` value is currently unused; to honour it, update `src/config/db.js`:
+- **Database name:** the server connects with `dbName: process.env.MONGODB_DB || "studiospace"`, so `MONGODB_DB=studiospace` in the server `.env` is enough even when `MONGO_URI` has no database path. Keeping the name explicit avoids writing to Mongoose's default `test` database.
 
-  ```js
-  await mongoose.connect(process.env.MONGO_URI, {
-    dbName: process.env.MONGODB_DB || "studiospace",
-  });
-  ```
+### Seed studio data
 
-  Existing documents in `test` are not moved automatically when you switch database names.
+The server ships an idempotent seeder that writes real studio listings, reviews and a host account to MongoDB:
+
+```bash
+cd <server-folder>
+npm run seed
+```
+
+The seeder uses the same `MONGODB_DB` database as the API. It creates a host account (`host@studiospace.dev` / `Host@123456`), 12 studios and reviews for each studio. Re-running it updates the seed data without creating duplicates.
 
 ### 5. Start the development server
 
@@ -141,6 +144,8 @@ The client API layer uses these endpoints:
 | GET | `/api/studios/featured` | Get featured studios |
 | GET | `/api/studios/my-listings` | Get studios owned by the signed-in user |
 | GET | `/api/studios/:id` | Get one studio |
+| GET | `/api/studios/:id/reviews` | Get reviews for a studio |
+| POST | `/api/studios/:id/reviews` | Add a review (signed-in users) |
 | POST | `/api/studios` | Create a studio |
 | PUT | `/api/studios/:id` | Update a studio |
 | DELETE | `/api/studios/:id` | Delete a studio |

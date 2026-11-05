@@ -2,8 +2,16 @@ import axios from "axios";
 import { CATEGORIES } from "./constants";
 import type { Booking, BookingStatus, Review, Studio, StudioCategory } from "./types";
 
+// Accept both `http://host:5000` and `http://host:5000/api` so a missing
+// `/api` suffix in the environment never breaks every request.
+const rawApiUrl =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const apiBaseUrl = /\/api\/?$/.test(rawApiUrl)
+  ? rawApiUrl.replace(/\/+$/, "")
+  : `${rawApiUrl.replace(/\/+$/, "")}/api`;
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
+  baseURL: apiBaseUrl,
   withCredentials: true,
 });
 

@@ -95,243 +95,197 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-4rem)] lg:grid-cols-2">
-      {/* Visual side (first on desktop for variety) */}
-      <div className="grain relative order-2 hidden overflow-hidden bg-[oklch(0.15_0.012_255)] lg:order-1 lg:block">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&w=1400&q=80"
-          alt="Host preparing a creative studio space"
-          className="absolute inset-0 size-full object-cover opacity-70"
-        />
-        <div className="hero-scrim absolute inset-0" />
-        <span className="vf-outer absolute inset-6 !text-white/45">
-          <span className="vf-inner !text-white/45" />
-        </span>
+    <div className="spotlight relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-5 py-14 sm:px-10">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card/80 p-6 shadow-[0_30px_80px_-50px_oklch(0_0_0/0.7)] backdrop-blur sm:p-8">
+        <Link href="/" className="mb-8 inline-flex items-center gap-2.5">
+          <ApertureMark className="size-9 text-primary" />
+          <span className="font-heading text-lg font-extrabold tracking-tight">
+            Studio<span className="text-primary">Space</span>
+          </span>
+        </Link>
 
-        <div className="relative z-10 flex h-full flex-col justify-end gap-6 p-10">
-          <div>
-            <span className="eyebrow text-[oklch(0.8_0.15_66)]">
-              For hosts
-            </span>
-            <h2 className="mt-2 max-w-sm text-3xl leading-tight font-extrabold text-white text-balance">
-              Your empty room is someone&apos;s next production
-            </h2>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/75">
-              Set your own hourly rate, block off maintenance days and let
-              StudioSpace handle deposits, verification and guest support.
+        <span className="eyebrow text-primary">Join the platform</span>
+        <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+          Create your account
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          One account for booking studios, listing your own space and keeping
+          every receipt in order.
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              type="text"
+              autoComplete="name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your full name"
+              className="h-11 rounded-lg px-4"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="reg-email">Email</Label>
+            <Input
+              id="reg-email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@studio.com"
+              className="h-11 rounded-lg px-4"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="photo">Photo URL</Label>
+            <Input
+              id="photo"
+              type="url"
+              value={photoURL}
+              onChange={(e) => setPhotoURL(e.target.value)}
+              placeholder="https://…/your-avatar.jpg"
+              className="h-11 rounded-lg px-4"
+            />
+            <p className="text-xs text-muted-foreground">
+              Used as your avatar in bookings and listing ownership.
             </p>
           </div>
-          <ul className="flex flex-col gap-2.5 text-sm text-white/85">
-            {[
-              "Keep 100% of your listed rate — no listing fees",
-              "ID-verified bookings with liability coverage",
-              "Calendar sync and instant payout after each session",
-            ].map((perk) => (
-              <li key={perk} className="flex items-start gap-2.5">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <CheckIcon className="size-3" />
-                </span>
-                {perk}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
 
-      {/* Form side */}
-      <div className="spotlight relative order-1 flex items-center justify-center px-5 py-14 sm:px-10 lg:order-2">
-        <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 inline-flex items-center gap-2.5">
-            <ApertureMark className="size-9 text-primary" />
-            <span className="font-heading text-lg font-extrabold tracking-tight">
-              Studio<span className="text-primary">Space</span>
-            </span>
-          </Link>
-
-          <span className="eyebrow text-primary">Join the platform</span>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Create your account
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            One account for booking studios, listing your own space and keeping
-            every receipt in order.
-          </p>
-
-          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Name</Label>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="reg-password">Password</Label>
+            <div className="relative">
               <Input
-                id="name"
-                type="text"
-                autoComplete="name"
+                id="reg-password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your full name"
-                className="h-11 rounded-lg px-4"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                aria-invalid={password ? !!passwordError : undefined}
+                className="h-11 rounded-lg pr-11 pl-4"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOffIcon className="size-4" />
+                ) : (
+                  <EyeIcon className="size-4" />
+                )}
+              </button>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="reg-email">Email</Label>
-              <Input
-                id="reg-email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@studio.com"
-                className="h-11 rounded-lg px-4"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="photo">Photo URL</Label>
-              <Input
-                id="photo"
-                type="url"
-                value={photoURL}
-                onChange={(e) => setPhotoURL(e.target.value)}
-                placeholder="https://…/your-avatar.jpg"
-                className="h-11 rounded-lg px-4"
-              />
-              <p className="text-xs text-muted-foreground">
-                Used as your avatar in bookings and listing ownership.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="reg-password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="reg-password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  aria-invalid={password ? !!passwordError : undefined}
-                  className="h-11 rounded-lg pr-11 pl-4"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <EyeOffIcon className="size-4" />
-                  ) : (
-                    <EyeIcon className="size-4" />
-                  )}
-                </button>
-              </div>
-
-              {/* Live validation checklist */}
-              <ul className="mt-1 flex flex-col gap-1.5">
-                {RULES.map((rule) => {
-                  const passed = rule.test(password);
-                  return (
-                    <li
-                      key={rule.label}
-                      className={`flex items-center gap-2 text-xs transition-colors ${
+            {/* Live validation checklist */}
+            <ul className="mt-1 flex flex-col gap-1.5">
+              {RULES.map((rule) => {
+                const passed = rule.test(password);
+                return (
+                  <li
+                    key={rule.label}
+                    className={`flex items-center gap-2 text-xs transition-colors ${
+                      passed
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    <span
+                      className={`flex size-4 items-center justify-center rounded-full border ${
                         passed
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-muted-foreground"
+                          ? "border-emerald-500 bg-emerald-500 text-white"
+                          : "border-border"
                       }`}
                     >
-                      <span
-                        className={`flex size-4 items-center justify-center rounded-full border ${
-                          passed
-                            ? "border-emerald-500 bg-emerald-500 text-white"
-                            : "border-border"
-                        }`}
-                      >
-                        {passed ? (
-                          <CheckIcon className="size-2.5" />
-                        ) : (
-                          <XIcon className="size-2.5 text-muted-foreground/60" />
-                        )}
-                      </span>
-                      {rule.label}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="beam mt-1 h-11 w-full rounded-full text-base font-bold shadow-[0_14px_30px_-16px_oklch(0.76_0.155_62)]"
-            >
-              {submitting ? (
-                <>
-                  <Loader2Icon className="size-4 animate-spin" />
-                  Creating account…
-                </>
-              ) : (
-                "Register"
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-5 flex items-center gap-3" aria-hidden>
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              or
-            </span>
-            <span className="h-px flex-1 bg-border" />
+                      {passed ? (
+                        <CheckIcon className="size-2.5" />
+                      ) : (
+                        <XIcon className="size-2.5 text-muted-foreground/60" />
+                      )}
+                    </span>
+                    {rule.label}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
-          <div className="relative mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={googleLoading}
-              onClick={
-                googleClientId
-                  ? undefined
-                  : () =>
-                      toast.error(
-                        "Google sign-in isn't configured for this build.",
-                      )
-              }
-              className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold"
-            >
-              {googleLoading ? (
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="beam mt-1 h-11 w-full rounded-full text-base font-bold shadow-[0_14px_30px_-16px_oklch(0.76_0.155_62)]"
+          >
+            {submitting ? (
+              <>
                 <Loader2Icon className="size-4 animate-spin" />
-              ) : (
-                <GoogleIcon />
-              )}
-              Sign up with Google
-            </Button>
-            {googleClientId ? (
-              <div className="absolute inset-0 z-10 overflow-hidden rounded-full opacity-0 [&>div]:!w-full [&_iframe]:!w-full">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => toast.error("Google sign-up failed")}
-                  width="400"
-                  text="continue_with"
-                  shape="pill"
-                />
-              </div>
-            ) : null}
-          </div>
+                Creating account…
+              </>
+            ) : (
+              "Register"
+            )}
+          </Button>
+        </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-semibold text-primary underline-offset-4 hover:underline"
-            >
-              Login
-            </Link>
-          </p>
+        <div className="mt-5 flex items-center gap-3" aria-hidden>
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            or
+          </span>
+          <span className="h-px flex-1 bg-border" />
         </div>
+
+        <div className="relative mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={googleLoading}
+            onClick={
+              googleClientId
+                ? undefined
+                : () =>
+                    toast.error(
+                      "Google sign-in isn't configured for this build.",
+                    )
+            }
+            className="h-11 w-full gap-2.5 rounded-full text-sm font-semibold"
+          >
+            {googleLoading ? (
+              <Loader2Icon className="size-4 animate-spin" />
+            ) : (
+              <GoogleIcon />
+            )}
+            Sign up with Google
+          </Button>
+          {googleClientId ? (
+            <div className="absolute inset-0 z-10 overflow-hidden rounded-full opacity-0 [&>div]:!w-full [&_iframe]:!w-full">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error("Google sign-up failed")}
+                width="400"
+                text="continue_with"
+                shape="pill"
+              />
+            </div>
+          ) : null}
+        </div>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-semibold text-primary underline-offset-4 hover:underline"
+          >
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );
