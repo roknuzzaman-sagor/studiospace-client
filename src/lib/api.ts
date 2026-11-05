@@ -1,9 +1,15 @@
 import axios from "axios";
 import { CATEGORIES } from "./constants";
+import { getApiBaseUrl } from "./auth-contract";
 import type { Booking, BookingStatus, Review, Studio, StudioCategory } from "./types";
 
+const apiBaseUrl = getApiBaseUrl(
+  process.env.NEXT_PUBLIC_API_URL,
+  typeof window !== "undefined",
+);
+
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: apiBaseUrl,
   withCredentials: true,
 });
 

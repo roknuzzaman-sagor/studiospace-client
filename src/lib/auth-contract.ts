@@ -26,6 +26,14 @@ export function getApiOrigin(configuredUrl?: string): string {
   return url.origin;
 }
 
+export function getApiBaseUrl(
+  configuredUrl: string | undefined,
+  isBrowser: boolean,
+): string {
+  if (isBrowser) return "/api";
+  return `${getApiOrigin(configuredUrl)}/api`;
+}
+
 export function createRegisterPayload(input: RegisterPayloadInput) {
   return {
     name: input.name.trim(),

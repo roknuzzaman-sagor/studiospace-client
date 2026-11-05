@@ -24,6 +24,7 @@ const {
   createGooglePayload,
   createLoginPayload,
   createRegisterPayload,
+  getApiBaseUrl,
   getApiOrigin,
   isUnauthorizedStatus,
 } = authContract;
@@ -31,6 +32,14 @@ const {
 test("API proxy accepts an origin with or without a trailing API path", () => {
   assert.equal(getApiOrigin("https://api.example.test"), "https://api.example.test");
   assert.equal(getApiOrigin("https://api.example.test/api/"), "https://api.example.test");
+});
+
+test("API client uses same-origin requests in browsers and an absolute URL on the server", () => {
+  assert.equal(getApiBaseUrl("https://api.example.test", true), "/api");
+  assert.equal(
+    getApiBaseUrl("https://api.example.test", false),
+    "https://api.example.test/api",
+  );
 });
 
 test("registration and login normalize email but preserve the exact password", () => {
